@@ -1,16 +1,14 @@
 package global
 
 import (
-	"code.cloudfoundry.org/cli/api/cloudcontroller/ccversion"
 	"code.cloudfoundry.org/cli/integration/helpers"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
 	. "github.com/onsi/gomega/gbytes"
 	. "github.com/onsi/gomega/gexec"
-	. "github.com/onsi/gomega/ghttp"
 )
 
-var _ = Describe("delete-buildpack command", func() {
+var _ = FDescribe("delete-buildpack command", func() {
 	var (
 		buildpackName string
 		stacks        []string
@@ -31,8 +29,8 @@ var _ = Describe("delete-buildpack command", func() {
 			Eventually(session).Should(Say(`cf delete-buildpack BUILDPACK \[-f] \[-s STACK]`))
 			Eventually(session).Should(Say("\n"))
 			Eventually(session).Should(Say("OPTIONS:"))
-			Eventually(session).Should(Say(`-f\s+Force deletion without confirmation`))
-			Eventually(session).Should(Say(`-s\s+Specify stack to disambiguate buildpacks with the same name. Required when buildpack name is ambiguous`))
+			Eventually(session).Should(Say(`-f, --force\s+Force deletion without confirmation`))
+			Eventually(session).Should(Say(`-s, --stack\s+Specify stack to disambiguate buildpacks with the same name. Required when buildpack name is ambiguous`))
 			Eventually(session).Should(Say("\n"))
 			Eventually(session).Should(Say("SEE ALSO:"))
 			Eventually(session).Should(Say("buildpacks"))
@@ -62,7 +60,6 @@ var _ = Describe("delete-buildpack command", func() {
 
 		When("the user specifies a stack", func() {
 			BeforeEach(func() {
-				helpers.SkipIfVersionLessThan(ccversion.MinVersionBuildpackStackAssociationV2)
 				stacks = helpers.FetchStacks()
 			})
 
@@ -79,7 +76,6 @@ var _ = Describe("delete-buildpack command", func() {
 	Context("there is exactly one buildpack with the specified name", func() {
 		When("the stack is specified", func() {
 			BeforeEach(func() {
-				helpers.SkipIfVersionLessThan(ccversion.MinVersionBuildpackStackAssociationV2)
 				stacks = helpers.FetchStacks()
 				helpers.BuildpackWithStack(func(buildpackPath string) {
 					session := helpers.CF("create-buildpack", buildpackName, buildpackPath, "1")
@@ -105,7 +101,6 @@ var _ = Describe("delete-buildpack command", func() {
 
 	Context("there are two buildpacks with same name", func() {
 		BeforeEach(func() {
-			helpers.SkipIfVersionLessThan(ccversion.MinVersionBuildpackStackAssociationV2)
 			stacks = helpers.EnsureMinimumNumberOfStacks(2)
 		})
 
@@ -236,33 +231,12 @@ var _ = Describe("delete-buildpack command", func() {
 		})
 	})
 
-	When("the -f flag is provided", func() {
-		It("deletes the buildpack", func() {
-			session := helpers.CF("delete-buildpack", buildpackName, "-f")
+	When("the --force flag is provided", func() {
+		It("deletes the buildpack without asking for confirmation", func() {
+			session := helpers.CF("delete-buildpack", buildpackName, "--force")
 			Eventually(session).Should(Say(`Deleting buildpack %s\.\.\.`, buildpackName))
 			Eventually(session).Should(Say("OK"))
 			Eventually(session).Should(Exit(0))
-		})
-	})
-
-	When("the -s flag is provided", func() {
-		When("the API is less than the minimum", func() {
-			var server *Server
-
-			BeforeEach(func() {
-				server = helpers.StartAndTargetServerWithAPIVersions(ccversion.MinV2ClientVersion, ccversion.MinV3ClientVersion)
-			})
-
-			AfterEach(func() {
-				server.Close()
-			})
-
-			It("fails with no networking api error message", func() {
-				session := helpers.CF("delete-buildpack", "potato", "-s", "ahoyhoy")
-				Eventually(session).Should(Say("FAILED"))
-				Eventually(session.Err).Should(Say("Option '-s' requires CF API version %s or higher. Your target is %s.", ccversion.MinVersionBuildpackStackAssociationV2, ccversion.MinV2ClientVersion))
-				Eventually(session).Should(Exit(1))
-			})
 		})
 	})
 })
