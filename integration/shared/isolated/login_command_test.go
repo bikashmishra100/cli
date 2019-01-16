@@ -1,6 +1,7 @@
 package isolated
 
 import (
+	"fmt"
 	"regexp"
 	"strings"
 
@@ -11,14 +12,7 @@ import (
 	. "github.com/onsi/gomega/gexec"
 )
 
-var _ = Describe("login command", func() {
-	var buffer *Buffer
-
-	BeforeEach(func() {
-		buffer = NewBuffer()
-		buffer.Write([]byte("\n"))
-	})
-
+var _ = FDescribe("login command", func() {
 	Describe("Help Text", func() {
 		When("--help flag is set", func() {
 			It("displays the command usage", func() {
@@ -69,7 +63,7 @@ var _ = Describe("login command", func() {
 
 			When("the user does not provide the -a flag", func() {
 				It("prompts the user for an endpoint", func() {
-					buffer = NewBuffer()
+					buffer := NewBuffer()
 					buffer.Write([]byte("\n"))
 					session := helpers.CFWithStdin(buffer, "login")
 					Eventually(session).Should(Say("API endpoint>"))
@@ -79,7 +73,7 @@ var _ = Describe("login command", func() {
 
 				When("the API endpoint provided at the prompt is unreachable", func() {
 					It("returns an error", func() {
-						buffer = NewBuffer()
+						buffer := NewBuffer()
 						buffer.Write([]byte("does.not.exist\n"))
 						session := helpers.CFWithStdin(buffer, "login")
 						Eventually(session).Should(Say("API endpoint>"))
@@ -105,14 +99,10 @@ var _ = Describe("login command", func() {
 					Expect(session).Should(Say("api endpoint:   %s", apiURL))
 				})
 
-				When("the provided API endpoint is an invalid URL", func() {
-					Fail("TODO")
-				})
-
 				When("the provided API endpoint is unreachable", func() {
 					It("displays an error and fails", func() {
 						session := helpers.CF("login", "-a", "does.not.exist", "--skip-ssl-validation")
-						Eventually(session).Should(Say("API endpoint: %s", apiURL))
+						Eventually(session).Should(Say("API endpoint: does.not.exist"))
 						Eventually(session).Should(Say("FAILED"))
 						Eventually(session).Should(Say("Error performing request: "))
 						Eventually(session).Should(Say("TIP: If you are behind a firewall and require an HTTP proxy, verify the https_proxy environment variable is correctly set. Else, check your network connection."))
@@ -173,7 +163,7 @@ var _ = Describe("login command", func() {
 				When("the provided API endpoint is unreachable", func() {
 					It("displays an error and unsets the API endpoint", func() {
 						session := helpers.CF("login", "-a", "does.not.exist", "--skip-ssl-validation")
-						Eventually(session).Should(Say("API endpoint: %s", apiURL))
+						Eventually(session).Should(Say("API endpoint: does.not.exist"))
 						Eventually(session).Should(Say("FAILED"))
 						Eventually(session).Should(Say("Error performing request: "))
 						Eventually(session).Should(Say("TIP: If you are behind a firewall and require an HTTP proxy, verify the https_proxy environment variable is correctly set. Else, check your network connection."))
@@ -189,9 +179,25 @@ var _ = Describe("login command", func() {
 		})
 	})
 
+	Describe("User Credentials", func() {
+		XIt("prompts the user for email and password", func() {
+			Fail("TODO")
+			username, password := helpers.GetCredentials()
+			buffer := NewBuffer()
+			buffer.Write([]byte(fmt.Sprintf("%s\n%s\n", username, password)))
+			session := helpers.CFWithStdin(buffer, "login")
+			// session := helpers.CF("login", "-u", username, "-p", password)
+			Eventually(session).Should(Say("Email> "))
+			Eventually(session).Should(Say("Password> "))
+			Eventually(session).Should(Exit(0))
+		})
+	})
+
 	When("--sso-passcode flag is given", func() {
 		When("a passcode isn't provided", func() {
 			It("prompts the user to try again", func() {
+				buffer := NewBuffer()
+				buffer.Write([]byte("\n"))
 				session := helpers.CFWithStdin(buffer, "login", "--sso-passcode")
 				Eventually(session.Err).Should(Say("Incorrect Usage: expected argument for flag `--sso-passcode'"))
 				Eventually(session).Should(Exit(1))
@@ -200,6 +206,8 @@ var _ = Describe("login command", func() {
 
 		When("the provided passcode is invalid", func() {
 			It("prompts the user to try again", func() {
+				buffer := NewBuffer()
+				buffer.Write([]byte("\n"))
 				session := helpers.CFWithStdin(buffer, "login", "--sso-passcode", "bad-passcode")
 				Eventually(session).Should(Say("Authenticating..."))
 				Eventually(session).Should(Say("Credentials were rejected, please try again."))
@@ -211,6 +219,8 @@ var _ = Describe("login command", func() {
 
 	When("both --sso and --sso-passcode flags are provided", func() {
 		It("errors with invalid use", func() {
+			buffer := NewBuffer()
+			buffer.Write([]byte("\n"))
 			session := helpers.CFWithStdin(buffer, "login", "--sso", "--sso-passcode", "some-passcode")
 			Eventually(session).Should(Say("Incorrect usage: --sso-passcode flag cannot be used with --sso"))
 			Eventually(session).Should(Exit(1))
