@@ -29,6 +29,7 @@ type SSHOptions struct {
 	SkipRemoteExecution bool
 	TerminalRequest     TTYRequest
 	ForwardSpecs        []ForwardSpec
+	RemoteForwardSpecs  []ForwardSpec
 }
 
 func NewSSHOptions(fc flags.FlagContext) (*SSHOptions, error) {
@@ -47,6 +48,16 @@ func NewSSHOptions(fc flags.FlagContext) (*SSHOptions, error) {
 				return sshOptions, err
 			}
 			sshOptions.ForwardSpecs = append(sshOptions.ForwardSpecs, *forwardSpec)
+		}
+	}
+
+	if fc.IsSet("R") {
+		for _, arg := range fc.StringSlice("R") {
+			forwardSpec, err := sshOptions.parseLocalForwardingSpec(arg)
+			if err != nil {
+				return sshOptions, err
+			}
+			sshOptions.RemoteForwardSpecs = append(sshOptions.RemoteForwardSpecs, *forwardSpec)
 		}
 	}
 

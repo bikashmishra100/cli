@@ -13,10 +13,11 @@ type SSHCommand struct {
 	DisablePseudoTTY    bool         `long:"disable-pseudo-tty" short:"T" description:"Disable pseudo-tty allocation"`
 	ForcePseudoTTY      bool         `long:"force-pseudo-tty" description:"Force pseudo-tty allocation"`
 	LocalPort           string       `short:"L" description:"Local port forward specification. This flag can be defined more than once."`
+    RemotePort          string       `short:"R" description:"Remote port forward specification. This flag can be defined more than once."`
 	RemotePseudoTTY     bool         `long:"request-pseudo-tty" short:"t" description:"Request pseudo-tty allocation"`
 	SkipHostValidation  bool         `long:"skip-host-validation" short:"k" description:"Skip host key validation"`
 	SkipRemoteExecution bool         `long:"skip-remote-execution" short:"N" description:"Do not execute a remote command"`
-	usage               interface{}  `usage:"CF_NAME ssh APP_NAME [-i INDEX] [-c COMMAND]... [-L [BIND_ADDRESS:]PORT:HOST:HOST_PORT] [--skip-host-validation] [--skip-remote-execution] [--disable-pseudo-tty | --force-pseudo-tty | --request-pseudo-tty]"`
+	usage               interface{}  `usage:"CF_NAME ssh APP_NAME [-i INDEX] [-c COMMAND]... [-L [BIND_ADDRESS:]PORT:HOST:HOST_PORT] [-R [BIND_ADDRESS:]PORT:HOST:HOST_PORT] [--skip-host-validation] [--skip-remote-execution] [--disable-pseudo-tty | --force-pseudo-tty | --request-pseudo-tty]"`
 	relatedCommands     interface{}  `related_commands:"allow-space-ssh, enable-ssh, space-ssh-allowed, ssh-code, ssh-enabled"`
 }
 

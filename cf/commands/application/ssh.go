@@ -43,6 +43,7 @@ func init() {
 func (cmd *SSH) MetaData() commandregistry.CommandMetadata {
 	fs := make(map[string]flags.FlagSet)
 	fs["L"] = &flags.StringSliceFlag{ShortName: "L", Usage: T("Local port forward specification. This flag can be defined more than once.")}
+	fs["R"] = &flags.StringSliceFlag{ShortName: "R", Usage: T("Remote port forward specification. This flag can be defined more than once.")}
 	fs["command"] = &flags.StringSliceFlag{Name: "command", ShortName: "c", Usage: T("Command to run. This flag can be defined more than once.")}
 	fs["app-instance-index"] = &flags.IntFlag{Name: "app-instance-index", ShortName: "i", Usage: T("Application instance index")}
 	fs["skip-host-validation"] = &flags.BoolFlag{Name: "skip-host-validation", ShortName: "k", Usage: T("Skip host key validation")}
@@ -55,7 +56,7 @@ func (cmd *SSH) MetaData() commandregistry.CommandMetadata {
 		Name:        "ssh",
 		Description: T("SSH to an application container instance"),
 		Usage: []string{
-			T("CF_NAME ssh APP_NAME [-i app-instance-index] [-c command] [-L [bind_address:]port:host:hostport] [--skip-host-validation] [--skip-remote-execution] [--request-pseudo-tty] [--force-pseudo-tty] [--disable-pseudo-tty]"),
+			T("CF_NAME ssh APP_NAME [-i app-instance-index] [-c command] [-L [bind_address:]port:host:hostport] [-R [bind_address:]port:host:hostport] [--skip-host-validation] [--skip-remote-execution] [--request-pseudo-tty] [--force-pseudo-tty] [--disable-pseudo-tty]"),
 		},
 		Flags: fs,
 	}

@@ -17,13 +17,12 @@ import (
 	"syscall"
 	"time"
 
-	"golang.org/x/crypto/ssh"
-
 	"code.cloudfoundry.org/cli/cf/models"
 	"code.cloudfoundry.org/cli/cf/ssh/options"
 	"code.cloudfoundry.org/cli/cf/ssh/sigwinch"
 	"code.cloudfoundry.org/cli/cf/ssh/terminal"
 	"github.com/moby/moby/pkg/term"
+	"golang.org/x/crypto/ssh"
 )
 
 const (
@@ -54,6 +53,7 @@ type SecureClient interface {
 	NewSession() (SecureSession, error)
 	Conn() ssh.Conn
 	Dial(network, address string) (net.Conn, error)
+	Listen(contype string, address string) (net.Listener, error)
 	Wait() error
 	Close() error
 }
@@ -150,6 +150,16 @@ func (c *secureShell) Close() error {
 func (c *secureShell) LocalPortForward() error {
 	for _, forwardSpec := range c.opts.ForwardSpecs {
 		listener, err := c.listenerFactory.Listen("tcp", forwardSpec.ListenAddress)
+		if err != nil {
+			return err
+		}
+		c.localListeners = append(c.localListeners, listener)
+
+		go c.localForwardAcceptLoop(listener, forwardSpec.ConnectAddress)
+	}
+
+	for _, forwardSpec := range c.opts.RemoteForwardSpecs {
+		listener, err := c.secureClient.Listen("tcp", forwardSpec.ListenAddress)
 		if err != nil {
 			return err
 		}
@@ -469,7 +479,10 @@ type secureClient struct{ client *ssh.Client }
 
 func (sc *secureClient) Close() error   { return sc.client.Close() }
 func (sc *secureClient) Conn() ssh.Conn { return sc.client.Conn }
-func (sc *secureClient) Wait() error    { return sc.client.Wait() }
+func (sc *secureClient) Listen(contype string, address string) (net.Listener, error) {
+	return sc.client.Listen(contype, address)
+}
+func (sc *secureClient) Wait() error { return sc.client.Wait() }
 func (sc *secureClient) Dial(n, addr string) (net.Conn, error) {
 	return sc.client.Dial(n, addr)
 }
